@@ -3,7 +3,7 @@ package ticTacToe;
 /**
  * 
  * 
- * @author ae187
+ * 
  *
  */
 public class IllegalMoveException extends Exception {

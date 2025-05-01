@@ -6,7 +6,7 @@ import java.util.Random;
 /**
  * A defensive policy: if there is a move to block the opponent's X's or O's in a row, this policy finds it and returns it. Otherwise
  * returns random move.
- * @author ae187
+ * 
  *
  */
 public class DefensivePolicy extends Policy {

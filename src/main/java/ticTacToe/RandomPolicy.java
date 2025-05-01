@@ -7,7 +7,7 @@ import java.util.Random;
 
 /**
  * This is a Policy which picks an move randomly with equal probability from the available moves. 
- * @author ae187
+ *
  *
  */
 public class RandomPolicy extends Policy{

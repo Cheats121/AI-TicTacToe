@@ -16,7 +16,7 @@ import java.util.List;
  * 
  * Note: This class assumes that the Value/Policy Iteration agents always play as 'X' (never 'O') - as does the {@link ValueIterationAgent} class.
  * 
- * @author ae187
+ *
  */
 
 public class TTTMDP {

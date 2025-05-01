@@ -10,7 +10,7 @@ import java.util.List;
  * whereas the RL agent (e.g. {@link QLearningAgent}) interacting with this environment always plays as 'X'. The key method to be used from this class
  * is the {@link TTTEnvironment#executeMove} method which takes a move (from X) and returns an {@link Outcome} object containing reward received as well
  * as the target state.
- * @author ae187
+ *
  *
  */
 public class TTTEnvironment {

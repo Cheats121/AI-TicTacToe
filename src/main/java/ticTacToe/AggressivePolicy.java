@@ -7,7 +7,7 @@ import java.util.Random;
  * An agrgessive policy: if there is a winning move given a game state (Game object) then this policy finds it. Otherwise returns a
  * random available move.
  *  
- * @author ae187
+ * 
  *
  */
 public class AggressivePolicy extends Policy {

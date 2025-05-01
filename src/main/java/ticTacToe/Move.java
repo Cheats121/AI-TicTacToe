@@ -2,7 +2,7 @@ package ticTacToe;
 
 /**
  * A move in the Tic-Tac-Toe game. If the game is modelled as an MDP, a Move is essentially an MDP Action.
- * @author ae187
+ * 
  *
  */
 public class Move {

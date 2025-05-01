@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 /**
  * A Tic Tac Toe Policy implemented via a HashMap
- * @author ae187
+ * 
  *
  */
 public class Policy {

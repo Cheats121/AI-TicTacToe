@@ -1,6 +1,9 @@
 package ticTacToe;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 /**
  * A Q-Learning agent with a Q-Table, i.e. a table of Q-Values. This table is implemented in the {@link QTable} class.
@@ -12,7 +15,7 @@ import java.util.List;
  * Your agent acts in a {@link TTTEnvironment} which provides the method {@link TTTEnvironment#executeMove} which returns an {@link Outcome} object, in other words
  * an [s,a,r,s']: source state, action taken, reward received, and the target state after the opponent has played their move. You may want/need to edit
  * {@link TTTEnvironment} - but you probably won't need to. 
- * @author ae187
+ *
  */
 
 public class QLearningAgent extends Agent {
@@ -101,6 +104,11 @@ public class QLearningAgent extends Agent {
 		
 	}
 	
+	/*
+	 * This method gets the maximim q value for a game state. It takes all the possible moves from the state.
+	 * If the list is empty, then we make the q value 0, else we compare and keep updating the max q value. 
+	 */
+	
 	
 	/**
 	 *  Implement this method. It should play {@code this.numEpisodes} episodes of Tic-Tac-Toe with the TTTEnvironment, updating q-values according 
@@ -113,9 +121,78 @@ public class QLearningAgent extends Agent {
 	
 	public void train()
 	{
-		/* 
-		 * YOUR CODE HERE
-		 */
+		int totalEp = 50000;                                        // Variable for number of episodes. Set to 50000
+		initQTable();                                               // Create Q table used for learning
+		
+		for (int ep = 0; ep < totalEp; ep++) {                      // Loop through each episode
+			Game currentState = env.game;                           // Get current state of the environment
+			
+			while (!currentState.isTerminal()) {                            // loop until current state is terminal
+				List<Move> possibleMv = currentState.getPossibleMoves();   // Get possible moves from current state
+				Move selectedMv = null;                                   // selected move set to null
+				
+				if(Math.random() < epsilon) {                             // Check is value is less the exploration rate (Epsilon)
+					if(!possibleMv.isEmpty()) {                           // Check if possible moves are available
+						int rIndex = new Random().nextInt(possibleMv.size());   // generate a random index within range of possible moves
+						selectedMv = possibleMv.get(rIndex);                    // retrieve the move 
+					}
+				}
+				
+				else {
+					double maxQvalue = Double.NEGATIVE_INFINITY;              // Variable to store Max Q value. Set to neg infinity
+					List<Move> maxQmoves = new ArrayList<>();                 // List to store moves by the Max Q value
+					
+					for (Move move : possibleMv) {                           // Loop through each possible move in the list
+						double qValue = qTable.getQValue(currentState, move);  // Get Q	value for the current move and state from Q table
+						
+						if (qValue > maxQvalue) {                              // Check if Q Value is greater than the current Max Q value
+							maxQvalue = qValue;                                // if true update the Max Q value
+							maxQmoves.clear();                                 // Clear list
+							maxQmoves.add(move);                               // add new move
+						}
+						
+						else if (qValue == maxQvalue) {                       // if Q value is equal to the Max Q value then 
+							maxQmoves.add(move);                              // add move to the list
+						}
+					}
+					
+					int randomIndex = new Random().nextInt(maxQmoves.size());    // Generate a random index within range of possible moves having Max Q value
+					selectedMv = maxQmoves.get(randomIndex);                     // Select a random move from list
+				}
+				
+				Outcome outC = null;                                            // Variable to store result of selected move. Set to null
+				try {
+					outC = env.executeMove(selectedMv);                        // Execute the selected move and get outcome
+				}
+				catch (IllegalMoveException err) {                            // case handling if illegal move is played
+					err.printStackTrace();
+				}
+				
+				Game sourceSt = outC.s;                                     // Get the source of outcome
+				Game targetSt = outC.sPrime;                                // Get the target of outcome
+				
+				List<Move> trgPosMoves = targetSt.getPossibleMoves();      // Get possible moves from target state
+				double maxTrgQValue = Double.NEGATIVE_INFINITY;            // Variable to store Max Q value. Set to neg infinity
+				
+				for (Move targetMv : trgPosMoves) {                     // Loop through possible moves in target state to find Max Q value   
+					double targetQValue = qTable.getQValue(targetSt, targetMv);  // Check if Q Value is greater than the current Max Q value
+					if (targetQValue > maxTrgQValue) {                           // if target Q value is greater than Max Q value
+						maxTrgQValue = targetQValue;                             // if true then update the Max Q value 
+					}
+				}
+				
+				if (targetSt.isTerminal()) {                                    // if target state is terminal
+					maxTrgQValue = 0.0;                                         // then set Max target value to 0.0
+				}
+				
+				double newQValue = (((1-alpha)*(qTable.getQValue(sourceSt, selectedMv)))+(alpha*(    // Update Q value using Q learning update
+						(outC.localReward)+(discount*maxTrgQValue))));
+				
+				qTable.addQValue(sourceSt, selectedMv, newQValue);                          // Update Q value in the Q table for the selected move and source state
+				currentState = outC.sPrime;                                                 // Move the target state based on outcome
+			}
+			env.reset();                                                                    // reset environment
+		}
 		
 		
 		//--------------------------------------------------------
@@ -132,15 +209,27 @@ public class QLearningAgent extends Agent {
 	 *
 	 * @return the policy currently inherent in the QTable
 	 */
-	public Policy extractPolicy()
-	{
-		/* 
-		 * YOUR CODE HERE
-		 */
+	public Policy extractPolicy() { 
+		Policy extractPol = new Policy();                       // Create a new Policy object
 		
-		
-		return null;
-		
+		for (Game state : qTable.keySet()) {                   // Iterate through each state in Q table      
+			HashMap<Move, Double> aValue = qTable.get(state);  // Get the action Value map for current state
+			
+			Move bestMove = null;                               // Create variable to find best move. Set to null
+			double bValue = Double.NEGATIVE_INFINITY;           // create Variable best Value set to neg infinity
+			
+			for(Move mv : aValue.keySet()) {                   // Loop through each move in action map
+				double val = aValue.get(mv);                   // get value of current move
+				if (val > bValue) {                            // if value is greater than current
+					bValue = val;                              // then update best value
+					bestMove = mv;                             // And best move
+				}
+			}
+			if (bestMove != null) {                            // if best Move is found and not null   
+				extractPol.policy.put(state, bestMove);        // then add this state and its best move to the extracted policy
+			}
+		}
+		return extractPol;	                                   // return extracted policy
 	}
 	
 	public static void main(String a[]) throws IllegalMoveException
@@ -151,18 +240,6 @@ public class QLearningAgent extends Agent {
 		HumanAgent d=new HumanAgent();
 		
 		Game g=new Game(agent, d, d);
-		g.playOut();
-		
-		
-		
-
-		
-		
-	}
-	
-	
-	
-
-
-	
+		g.playOut();	
+	}	
 }

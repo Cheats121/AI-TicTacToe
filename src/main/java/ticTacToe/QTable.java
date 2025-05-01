@@ -5,7 +5,7 @@ import java.util.HashMap;
  * This class a simple implementation of a Q-Table. It's a subclass of {@link java.util.HashMap}, so all the methods from 
  * that class are available. Two methods for adding and retrieving q-values to/from the table are provided.
  * 
- * @author ae187
+ *
  *
  */
 public class QTable extends HashMap<Game, HashMap<Move,Double>> {

@@ -11,10 +11,11 @@ import java.util.Map;
  * (2) {@link ValueIterationAgent#extractPolicy}
  * 
  * You may also want/need to edit {@link ValueIterationAgent#train} - feel free to do this, but you probably won't need to.
- * @author ae187
+ *
  *
  */
-public class ValueIterationAgent extends Agent {
+public class ValueIterationAgent extends Agent 
+{
 
 	/**
 	 * This map is used to store the values of states
@@ -54,13 +55,13 @@ public class ValueIterationAgent extends Agent {
 	 * Use this constructor to initialise your agent with an existing policy
 	 * @param p
 	 */
-	public ValueIterationAgent(Policy p) {
-		super(p);
-		
+	public ValueIterationAgent(Policy p) 
+	{
+		super(p);	
 	}
 
-	public ValueIterationAgent(double discountFactor) {
-		
+	public ValueIterationAgent(double discountFactor) 
+	{	
 		this.discount=discountFactor;
 		mdp=new TTTMDP();
 		initValues();
@@ -68,19 +69,15 @@ public class ValueIterationAgent extends Agent {
 	}
 	
 	/**
-	 * Initialises the {@link ValueIterationAgent#valueFunction} map, and sets the initial value of all states to 0 
+	 * Initializes the {@link ValueIterationAgent#valueFunction} map, and sets the initial value of all states to 0 
 	 * (V0 from the lectures). Uses {@link Game#inverseHash} and {@link Game#generateAllValidGames(char)} to do this. 
 	 * 
 	 */
 	public void initValues()
-	{
-		
+	{		
 		List<Game> allGames=Game.generateAllValidGames('X');//all valid games where it is X's turn, or it's terminal.
 		for(Game g: allGames)
-			this.valueFunction.put(g, 0.0);
-		
-		
-		
+			this.valueFunction.put(g, 0.0);		
 	}
 	
 	
@@ -91,19 +88,52 @@ public class ValueIterationAgent extends Agent {
 		mdp=new TTTMDP(winReward, loseReward, livingReward, drawReward);
 	}
 	
-	/**
-	 
+	/*
+	 * This method calculates the transition value based on the formula below (MDP).
+	 */
+	public double calcTransitionVal(TransitionProb t)
+	{
+		return t.prob * (t.outcome.localReward + (discount * valueFunction.get(t.outcome.sPrime)));   // The formula calculates the value of the transition by considering
+		                                                                                              // the probability of the transition (t.prob) 
+	}
+	
 	
 	/*
 	 * Performs {@link #k} value iteration steps. After running this method, the {@link ValueIterationAgent#valueFunction} map should contain
 	 * the (current) values of each reachable state. You should use the {@link TTTMDP} provided to do this.
-	 * 
-	 *
 	 */
-	public void iterate()
-	{
-		/* YOUR CODE HERE
-		 */
+	public void iterate() {
+	    double qValue;                                                                             // Variable to store the calculated Q value
+	    double maxQ;                                                                              // Variable to store the maximum Q value
+
+	    for (int iteration = 0; iteration < k; iteration++) {                                     // Loop through k number of transitions
+	        for (Game state : valueFunction.keySet()) {                                           // Loop through all states in the valueFunction set
+	            List<Move> possibleMoves = state.getPossibleMoves();                              // Initializing a list with all possible moves for the current state
+
+	            maxQ = state.isTerminal() ? 0 : -1000000;                                         // In the terminal state, set maxQ value to 0, else set it to a very low number
+
+	            for (Move move : possibleMoves) {                                                 // Loops through all possibleMoves for the current state
+	                List<TransitionProb> transitions = mdp.generateTransitions(state, move);     
+
+	                qValue = calculateTotalTransitionValue(transitions);                           // Calculates the new qValue for current state
+
+	                if (qValue > maxQ)                                                             // If qValue is greater than the maximum q value set that to new qValue
+	                    maxQ = qValue;                                                            
+	            }
+
+	            valueFunction.replace(state, maxQ);                                                //Update qValue
+	        }
+	    }
+	}
+
+	private double calculateTotalTransitionValue(List<TransitionProb> transitions) {                //Method to accumulate the value at each transition
+	    double totalTransValue = 0;
+
+	    for (TransitionProb transition : transitions) {                                             // Loop through all possible transitions
+	    	totalTransValue += calcTransitionVal(transition);                                       // Calculate the new qValue
+	    }
+
+	    return totalTransValue;                                                                     //return totalTransValue
 	}
 	
 	/**This method should be run AFTER the train method to extract a policy according to {@link ValueIterationAgent#valueFunction}
@@ -112,14 +142,28 @@ public class ValueIterationAgent extends Agent {
 	 * 
 	 * @return the policy according to {@link ValueIterationAgent#valueFunction}
 	 */
-	public Policy extractPolicy()
-	{
-		/*
-		 * YOUR CODE HERE
-		 */
-		return null;
+	public Policy extractPolicy() {
+	    double maxQ;                                                                                // Variable to store the calculated Q value
+	    double qVal;                                                                               // Variable to store the maximum Q value
+	    Policy policy = new Policy();                                                             // Create a new policy
+
+	    for (Game state : valueFunction.keySet()) {                                              // Loop through all states in the valueFunction set
+	        List<Move> possibleMoves = state.getPossibleMoves();                                // Initializing a list with all possible moves for the current state
+
+	        maxQ = state.isTerminal() ? 0 : -1000000;                                           // In the terminal state, set maxQ value to 0, else set it to a very low number
+
+	        for (Move move : possibleMoves) {                                                 // Loops through all possibleMoves for the current states
+	            List<TransitionProb> transitions = mdp.generateTransitions(state, move);     // Initialize a list of transitions
+	            qVal = calculateTotalTransitionValue(transitions);                           // Calculates the new qValue for current state
+
+	            if (qVal > maxQ) {                                                          // If the q value is greater than the max q value
+	                maxQ = qVal;                                                            // Set the new q value as the max q value
+	                policy.policy.put(state, move);                                         // Set the policy for the game
+	            }
+	        }
+	    }
+	    return policy;                                                                      // Return policy
 	}
-	
 	/**
 	 * This method solves the mdp using your implementation of {@link ValueIterationAgent#extractPolicy} and
 	 * {@link ValueIterationAgent#iterate}. 
@@ -142,9 +186,6 @@ public class ValueIterationAgent extends Agent {
 			System.out.println("Unimplemented methods! First implement the iterate() & extractPolicy() methods");
 			//System.exit(1);
 		}
-		
-		
-		
 	}
 
 	public static void main(String a[]) throws IllegalMoveException
@@ -154,12 +195,6 @@ public class ValueIterationAgent extends Agent {
 		HumanAgent d=new HumanAgent();
 		
 		Game g=new Game(agent, d, d);
-		g.playOut();
-		
-		
-		
-
-		
-		
+		g.playOut();		
 	}
 }

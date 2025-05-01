@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 /**
  * A human agent that doesn't have a policy, instead asks the user to enter a move using a command line.
- * @author ae187
+ * 
  *
  */
 public class HumanAgent extends Agent {
